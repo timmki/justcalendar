@@ -1,0 +1,18 @@
+{
+  "name": "JustCalendar",
+  "short_name": "JustCalendar",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f0e8",
+  "theme_color": "#11231f",
+  "description": "A read-only calendar viewer with offline snapshots.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

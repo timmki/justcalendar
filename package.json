@@ -1,0 +1,37 @@
+{
+  "name": "justcalendar",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "tsc && vite build && npm run check:bundle",
+    "start": "node dist-server/server/server.js",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test",
+    "config:generate": "node scripts/generate-config.mjs",
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
+    "ci": "npm run lint && npm run typecheck && npm test && npm run build && npm run e2e"
+  },
+  "dependencies": {
+    "ical.js": "^2.2.1",
+    "web-vitals": "^4.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.5",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  }
+}
