@@ -38,6 +38,40 @@ deployment logo without changing application code, place `logo.png` in `public/`
 available, the application tries `public/logo.jpg`. When neither asset exists, the text branding
 is shown without a broken-image placeholder.
 
+## Docker and Raspberry Pi
+
+The production image uses a multi-stage Node 22 Alpine build. The runtime image contains the
+compiled frontend/server without npm-installed development dependencies, runs as the non-root
+`node` user, listens on `0.0.0.0:8787` by default, and has a local root healthcheck.
+
+Build and run locally:
+
+```sh
+docker build -t justcalendar:local .
+docker run --rm --name justcalendar -p 8787:8787 \
+  -e JUSTCALENDAR_DEFAULT_ICS_URL=https://calendar.example.test/public.ics \
+  -e JUSTCALENDAR_TITLE='Raspberry Kalender' \
+  justcalendar:local
+```
+
+GitHub Actions builds `linux/amd64`, `linux/arm64`, and `linux/arm/v7`. Successful non-pull-request
+builds are published to `ghcr.io/<owner>/<repository>` with branch/tag/SHA metadata; pull requests
+build without publishing.
+
+On a Raspberry Pi, pull and run the architecture-appropriate manifest:
+
+```sh
+docker pull ghcr.io/OWNER/REPOSITORY:master
+docker run -d --name justcalendar --restart unless-stopped \
+  -p 127.0.0.1:8787:8787 \
+  -e JUSTCALENDAR_DEFAULT_ICS_URL=https://calendar.example.test/public.ics \
+  ghcr.io/OWNER/REPOSITORY:master
+```
+
+Use `linux/arm64` with 64-bit Raspberry Pi OS or `linux/arm/v7` with 32-bit ARMv7 Raspberry Pi
+OS. The existing reverse proxy can forward to `127.0.0.1:8787`; reverse-proxy, TLS, DNS,
+authentication, and firewall configuration are intentionally outside this feature.
+
 Release validation requires `RELEASE_ORIGIN`, `RELEASE_ICS_URL`, and `RELEASE_ROLLBACK_ORIGIN`; it checks the deployed config, proxy response, telemetry configuration, and rollback target. `npm run ci` runs the local CI-equivalent checks.
 
 ## Recovery

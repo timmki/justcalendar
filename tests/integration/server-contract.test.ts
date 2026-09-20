@@ -1,11 +1,16 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ProxyError } from '../../server/ics-proxy.js';
 import { createAppServer, MAX_REQUEST_HEADER_BYTES } from '../../server/server.js';
 
 const servers: ReturnType<typeof createAppServer>[] = [];
+const staticDirs: string[] = [];
 
 afterEach(async () => {
   await Promise.all(servers.splice(0).map((server) => new Promise<void>((resolve) => server.close(() => resolve()))));
+  await Promise.all(staticDirs.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
 describe('same-origin server contract', () => {
@@ -86,5 +91,30 @@ describe('same-origin server contract', () => {
     const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/ics`, { method: 'GET' });
     expect(response.status).toBe(405);
     expect(response.headers.get('content-type')).toContain('application/problem+json');
+  });
+
+  it('serves the root health target and image assets with their media types', async () => {
+    const staticDir = await mkdtemp(join(tmpdir(), 'justcalendar-static-'));
+    staticDirs.push(staticDir);
+    await writeFile(join(staticDir, 'index.html'), '<!doctype html><title>JustCalendar</title>');
+    await writeFile(join(staticDir, 'logo.png'), Buffer.from([137, 80, 78, 71]));
+    await writeFile(join(staticDir, 'logo.jpg'), Buffer.from([255, 216, 255, 217]));
+    const server = createAppServer({ staticDir });
+    servers.push(server);
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('Server did not bind.');
+
+    const rootResponse = await fetch(`http://127.0.0.1:${address.port}/`);
+    expect(rootResponse.status).toBe(200);
+    expect(await rootResponse.text()).toContain('JustCalendar');
+
+    const pngResponse = await fetch(`http://127.0.0.1:${address.port}/logo.png`);
+    expect(pngResponse.headers.get('content-type')).toContain('image/png');
+    expect((await pngResponse.arrayBuffer()).byteLength).toBe(4);
+
+    const jpgResponse = await fetch(`http://127.0.0.1:${address.port}/logo.jpg`);
+    expect(jpgResponse.headers.get('content-type')).toContain('image/jpeg');
+    expect((await jpgResponse.arrayBuffer()).byteLength).toBe(4);
   });
 });
