@@ -184,6 +184,9 @@ export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => voi
   let openPanel: 'settings' | 'filters' | null = null;
   let focusTarget: 'settings' | 'filters' | 'refresh' | null = null;
   const eventRenderToken = { value: 0 };
+  const logoFallback = element('span', '📅');
+  logoFallback.className = 'brand-logo-fallback';
+  logoFallback.setAttribute('aria-hidden', 'true');
   const logo = element('img');
   logo.className = 'brand-logo';
   logo.alt = '';
@@ -193,12 +196,16 @@ export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => voi
   const loadLogo = () => {
     if (logoCandidate >= logoSources.length) {
       logo.hidden = true;
+      logoFallback.hidden = false;
       return;
     }
     logo.src = logoSources[logoCandidate];
     logoCandidate += 1;
   };
-  logo.addEventListener('load', () => { logo.hidden = false; });
+  logo.addEventListener('load', () => {
+    logoFallback.hidden = true;
+    logo.hidden = false;
+  });
   logo.addEventListener('error', loadLogo);
   loadLogo();
 
@@ -217,7 +224,7 @@ export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => voi
     const subtitleElement = element('p', subtitle);
     subtitleElement.className = 'eyebrow';
     brandText.append(subtitleElement, element('h1', title));
-    brand.append(logo, brandText);
+    brand.append(logoFallback, logo, brandText);
     header.append(brand);
     root.append(header);
 

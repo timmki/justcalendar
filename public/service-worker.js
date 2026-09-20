@@ -1,7 +1,7 @@
 const CACHE_NAME = 'justcalendar-shell-v1';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['/', '/manifest.webmanifest', '/config.json'])));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['/', '/manifest.webmanifest', '/icon.svg', '/config.json'])));
 });
 
 self.addEventListener('activate', (event) => {

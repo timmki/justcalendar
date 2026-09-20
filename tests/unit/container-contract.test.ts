@@ -27,6 +27,7 @@ describe('container delivery contract', () => {
     expect(entrypoint).toContain('spawn');
     expect(entrypoint).toContain('SIGTERM');
     expect(entrypoint).toContain('stdio: \'inherit\'');
+    expect(entrypoint).toContain("copyFile('public/config.json', 'dist/config.json')");
   });
 
   it('defines validation-first multi-platform GHCR publication', async () => {

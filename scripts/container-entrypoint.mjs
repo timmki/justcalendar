@@ -1,8 +1,10 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { copyFile } from 'node:fs/promises';
 
 const config = spawnSync(process.execPath, ['scripts/generate-config.mjs'], { stdio: 'inherit' });
 if (config.error) throw config.error;
 if (config.status !== 0) process.exit(config.status ?? 1);
+await copyFile('public/config.json', 'dist/config.json');
 
 const server = spawn(process.execPath, ['dist-server/server/server.js'], { stdio: 'inherit' });
 let stopping = false;

@@ -99,6 +99,7 @@ describe('same-origin server contract', () => {
     await writeFile(join(staticDir, 'index.html'), '<!doctype html><title>JustCalendar</title>');
     await writeFile(join(staticDir, 'logo.png'), Buffer.from([137, 80, 78, 71]));
     await writeFile(join(staticDir, 'logo.jpg'), Buffer.from([255, 216, 255, 217]));
+    await writeFile(join(staticDir, 'icon.svg'), '<svg></svg>');
     const server = createAppServer({ staticDir });
     servers.push(server);
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
@@ -116,5 +117,8 @@ describe('same-origin server contract', () => {
     const jpgResponse = await fetch(`http://127.0.0.1:${address.port}/logo.jpg`);
     expect(jpgResponse.headers.get('content-type')).toContain('image/jpeg');
     expect((await jpgResponse.arrayBuffer()).byteLength).toBe(4);
+
+    const svgResponse = await fetch(`http://127.0.0.1:${address.port}/icon.svg`);
+    expect(svgResponse.headers.get('content-type')).toContain('image/svg+xml');
   });
 });

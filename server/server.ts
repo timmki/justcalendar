@@ -15,7 +15,8 @@ const contentTypes: Record<string, string> = {
   '.json': 'application/json; charset=utf-8',
   '.jpg': 'image/jpeg',
   '.png': 'image/png',
-  '.webmanifest': 'application/manifest+json; charset=utf-8',
+    '.svg': 'image/svg+xml',
+    '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 
 interface AppOptions {

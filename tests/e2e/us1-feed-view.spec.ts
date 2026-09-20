@@ -50,7 +50,7 @@ test.describe('US1 feed view', () => {
     await expect(page.locator('.status-panel button')).toHaveCSS('background-color', 'rgb(138, 197, 239)');
   });
 
-  test('falls back to JPG and hides absent logos', async ({ page }) => {
+  test('falls back to JPG and then the calendar emoji', async ({ page }) => {
     await configurePage(page);
     await configureLogo(page, { jpg: true });
     await page.goto('/');
@@ -61,6 +61,8 @@ test.describe('US1 feed view', () => {
     await configureLogo(page);
     await page.reload();
     await expect(page.locator('img.brand-logo')).toBeHidden();
+    await expect(page.locator('.brand-logo-fallback')).toHaveText('📅');
+    await expect(page.locator('.brand-logo-fallback')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Kommende Termine' })).toBeVisible();
   });
 
