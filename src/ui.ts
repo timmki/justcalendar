@@ -46,7 +46,10 @@ function updateFilterUrl(state: AppState): void {
 }
 
 export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => void {
-  return app.subscribe((state) => {
+  let openPanel: 'settings' | 'filters' | null = null;
+  let focusTarget: 'settings' | 'filters' | 'refresh' | null = null;
+
+  const render = (state: AppState) => {
     root.replaceChildren();
     root.setAttribute('aria-busy', state.status === 'loading' ? 'true' : 'false');
 
@@ -54,9 +57,17 @@ export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => voi
     header.append(element('p', 'JUSTCALENDAR'), element('h1', 'Upcoming events'));
     root.append(header);
 
+    const content = element('section');
+    content.className = 'events';
+    content.append(element('h2', 'Events'));
+    renderEvents(content, state);
+    root.append(content);
+
     const source = element('section');
     source.className = 'source-panel';
-    source.append(element('h2', 'Calendar source'));
+    source.id = 'settings-panel';
+    source.hidden = openPanel !== 'settings';
+    source.append(element('h2', 'Calendar settings'));
     const sourceForm = element('form');
     const sourceLabel = element('label', 'Public ICS URL');
     const sourceInput = element('input');
@@ -75,40 +86,26 @@ export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => voi
     if (state.localOverride) {
       const reset = element('button', 'Reset deployment URL');
       reset.type = 'button';
-      reset.addEventListener('click', () => void app.reset());
+      reset.addEventListener('click', () => {
+        focusTarget = 'settings';
+        void app.reset().finally(() => { focusTarget = null; });
+      });
       sourceActions.append(reset);
     }
     sourceForm.append(sourceActions);
     sourceForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      void app.replace(sourceInput.value);
+      focusTarget = 'settings';
+      void app.replace(sourceInput.value).finally(() => { focusTarget = null; });
     });
     const sourceHelp = element('p', 'Use HTTPS and a publicly accessible ICS feed.');
     sourceHelp.id = 'source-help';
     source.append(sourceForm, element('p', 'The viewer is read-only. It never edits this calendar.'), sourceHelp);
-    root.append(source);
-
-    const status = element('section');
-    status.className = 'status-panel';
-    status.setAttribute('aria-live', 'polite');
-    if (state.status === 'loading') status.append(element('p', 'Loading calendar…'));
-    if (state.error) {
-      const message = element('p', state.stale ? `Showing the last saved snapshot. Refresh failed: ${state.error}` : state.error);
-      message.className = state.stale ? 'warning' : 'error';
-      status.append(message);
-    }
-    if (state.snapshot) {
-      status.append(element('p', `Last refreshed: ${new Date(state.snapshot.fetchedAt).toLocaleString()}`));
-      if (state.snapshot.partialData) status.append(element('p', 'Some malformed calendar items were skipped.'));
-    }
-    const retry = element('button', 'Refresh calendar');
-    retry.type = 'button';
-    retry.addEventListener('click', () => void app.refresh());
-    status.append(retry);
-    root.append(status);
 
     const filters = element('section');
     filters.className = 'filters';
+    filters.id = 'filters-panel';
+    filters.hidden = openPanel !== 'filters';
     filters.append(element('h2', 'Filter events'));
     const filterForm = element('form');
     const from = element('input');
@@ -134,7 +131,10 @@ export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => voi
     const clear = element('button', 'Clear');
     clear.type = 'button';
     clear.addEventListener('click', () => {
+      openPanel = null;
+      focusTarget = 'filters';
       app.clearFilters();
+      focusTarget = null;
       window.history.replaceState(null, '', window.location.pathname);
     });
     filterActions.append(apply, clear);
@@ -142,19 +142,72 @@ export function mountCalendarApp(root: HTMLElement, app: CalendarApp): () => voi
     filterForm.addEventListener('submit', (event) => {
       event.preventDefault();
       const next = { from: from.value || null, to: to.value || null, query: query.value };
+      focusTarget = 'filters';
       app.setFilters(next);
+      focusTarget = null;
       updateFilterUrl({ ...state, filters: next });
     });
     filters.append(filterForm);
     if (state.filters.from || state.filters.to || state.filters.query.trim()) {
       filters.append(element('p', `Active filters: ${[state.filters.from && `from ${state.filters.from}`, state.filters.to && `to ${state.filters.to}`, state.filters.query && `matching '${state.filters.query}'`].filter(Boolean).join(', ')}`));
     }
-    root.append(filters);
+    const secondary = element('div');
+    secondary.className = 'secondary-controls';
+    const togglePanel = (panel: 'settings' | 'filters') => {
+      openPanel = openPanel === panel ? null : panel;
+      focusTarget = panel;
+      render(app.getState());
+      focusTarget = null;
+    };
+    const settingsButton = element('button', 'Settings');
+    settingsButton.type = 'button';
+    settingsButton.setAttribute('aria-controls', source.id);
+    settingsButton.setAttribute('aria-expanded', String(openPanel === 'settings'));
+    settingsButton.addEventListener('click', () => togglePanel('settings'));
+    const filtersButton = element('button', state.filters.from || state.filters.to || state.filters.query ? 'Filters (active)' : 'Filters');
+    filtersButton.type = 'button';
+    filtersButton.setAttribute('aria-controls', filters.id);
+    filtersButton.setAttribute('aria-expanded', String(openPanel === 'filters'));
+    filtersButton.addEventListener('click', () => togglePanel('filters'));
+    secondary.append(settingsButton, source, filtersButton, filters);
+    root.append(secondary);
 
-    const content = element('section');
-    content.className = 'events';
-    content.append(element('h2', 'Events'));
-    renderEvents(content, state);
-    root.append(content);
+    const status = element('section');
+    status.className = 'status-panel';
+    status.setAttribute('aria-live', 'polite');
+    if (state.status === 'loading') status.append(element('p', 'Loading calendar…'));
+    if (state.error) {
+      const message = element('p', state.stale ? `Showing the last saved snapshot. Refresh failed: ${state.error}` : state.error);
+      message.className = state.stale ? 'warning' : 'error';
+      status.append(message);
+    }
+    if (state.snapshot) {
+      status.append(element('p', `Last refreshed: ${new Date(state.snapshot.fetchedAt).toLocaleString()}`));
+      if (state.snapshot.partialData) status.append(element('p', 'Some malformed calendar items were skipped.'));
+    } else status.append(element('p', 'Not refreshed yet'));
+    const retry = element('button', 'Refresh calendar');
+    retry.type = 'button';
+    retry.id = 'refresh-button';
+    retry.addEventListener('click', () => {
+      openPanel = null;
+      focusTarget = 'refresh';
+      void app.refresh().finally(() => { focusTarget = null; });
+    });
+    status.append(retry);
+    root.append(status);
+
+    if (focusTarget) {
+      const selector = focusTarget === 'refresh' ? '#refresh-button' : `button[aria-controls="${focusTarget}-panel"]`;
+      root.querySelector<HTMLButtonElement>(selector)?.focus();
+    }
+  };
+
+  root.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !openPanel) return;
+    focusTarget = openPanel;
+    openPanel = null;
+    render(app.getState());
+    focusTarget = null;
   });
+  return app.subscribe(render);
 }

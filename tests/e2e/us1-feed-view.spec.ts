@@ -7,6 +7,7 @@ test.describe('US1 feed view', () => {
   test('loads events and exposes their details', async ({ page }) => {
     await configurePage(page);
     await page.goto('/');
+    await page.getByRole('button', { name: 'Settings' }).click();
     await expect(page.getByRole('heading', { name: 'Upcoming events' })).toBeVisible();
     await expect(page.getByText('Default event')).toBeVisible();
     await page.getByText('Default event').click();
@@ -16,9 +17,11 @@ test.describe('US1 feed view', () => {
   test('replaces and resets the active URL', async ({ page }) => {
     await configurePage(page);
     await page.goto('/');
+    await page.getByRole('button', { name: 'Settings' }).click();
     await page.getByLabel('Public ICS URL').fill(replacementUrl);
     await page.getByRole('button', { name: 'Use this calendar' }).click();
     await expect(page.getByText('Replacement event')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Settings' })).toBeFocused();
     await expect(page.getByRole('button', { name: 'Reset deployment URL' })).toBeVisible();
     await page.getByRole('button', { name: 'Reset deployment URL' }).click();
     await expect(page.getByText('Default event')).toBeVisible();
@@ -28,6 +31,7 @@ test.describe('US1 feed view', () => {
   test('supports recovery when deployment configuration is empty', async ({ page }) => {
     await configurePage(page, { defaultUrl: null });
     await page.goto('/');
+    await page.getByRole('button', { name: 'Settings' }).click();
     await expect(page.getByText('No deployment calendar URL is configured.')).toBeVisible();
     await page.getByLabel('Public ICS URL').fill(defaultUrl);
     await page.getByRole('button', { name: 'Use this calendar' }).click();
@@ -45,9 +49,12 @@ test.describe('US1 feed view', () => {
     }));
     await page.goto('/');
     await expect(page.getByText('No deployment calendar URL is configured.')).toBeVisible();
+    await page.getByRole('button', { name: 'Settings' }).click();
     available = true;
     await page.getByRole('button', { name: 'Refresh calendar' }).click();
     await expect(page.getByText('Default event')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Settings' })).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('button', { name: 'Refresh calendar' })).toBeFocused();
   });
 
   test('shows a retryable proxy error and recovers', async ({ page }) => {

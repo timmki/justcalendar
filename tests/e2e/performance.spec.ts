@@ -5,9 +5,21 @@ test.use({ serviceWorkers: 'block' });
 
 const largeFeed = `BEGIN:VCALENDAR\nVERSION:2.0\n${Array.from({ length: 5000 }, (_, index) => `BEGIN:VEVENT\nUID:event-${index}\nDTSTART:20260920T090000Z\nSUMMARY:Performance event ${index}\nEND:VEVENT`).join('\n')}\nEND:VCALENDAR`;
 
+test('keeps events before secondary panels and avoids horizontal overflow', async ({ page }) => {
+  await configurePage(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  expect(await page.locator('.events').evaluate((events) => {
+    const status = document.querySelector('.status-panel');
+    return Boolean(status && events.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING);
+  })).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test('filters 5,000 occurrences within two seconds', async ({ page }) => {
   await configurePage(page, { feed: largeFeed });
   await page.goto('/');
+  await page.getByRole('button', { name: 'Filters' }).click();
   const elapsed = await page.evaluate(async () => {
     const started = performance.now();
     const input = document.querySelector('input[type="search"]') as HTMLInputElement;
@@ -43,6 +55,7 @@ test('meets real render, interaction, and layout budgets', async ({ page }) => {
   });
   await configurePage(page);
   await page.goto('/');
+  await page.getByRole('button', { name: 'Filters' }).click();
   await page.getByLabel('Search').fill('Default');
   await page.waitForTimeout(50);
   const vitals = await page.evaluate(() => (window as Window & { __justCalendarVitals?: { lcp: number; inp: number; cls: number } }).__justCalendarVitals);

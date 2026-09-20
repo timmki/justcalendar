@@ -15,6 +15,7 @@ test.describe('US3 offline snapshot', () => {
     await configurePage(page);
     await page.goto('/');
     await expect(page.getByText('Default event')).toBeVisible();
+    await page.getByRole('button', { name: 'Settings' }).click();
     await page.getByLabel('Public ICS URL').fill('https://calendar.example.test/default.ics');
     await page.getByRole('button', { name: 'Use this calendar' }).click();
     await expect(page.getByText('Default event')).toBeVisible();
@@ -35,6 +36,7 @@ test.describe('US3 offline snapshot', () => {
     await page.reload();
     await expect(page.getByText(/Showing the last saved snapshot/)).toBeVisible();
     expect(Date.now() - started).toBeLessThan(5000);
+    await page.getByRole('button', { name: 'Filters' }).click();
     await page.getByLabel('Search').fill('Default');
     await page.getByRole('button', { name: 'Apply filters' }).click();
     await expect(page.getByText('Default event')).toBeVisible();
@@ -58,5 +60,8 @@ test.describe('US3 offline snapshot', () => {
     await page.reload();
     await expect(page.getByText('No offline calendar is available yet.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Refresh calendar' })).toBeVisible();
+    expect(await page.locator('.events').evaluate((events) => Boolean(
+      events.compareDocumentPosition(document.querySelector('.status-panel')!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ))).toBe(true);
   });
 });

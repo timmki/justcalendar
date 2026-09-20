@@ -110,6 +110,22 @@ button[type='button']:last-child {
   color: #fffdf7;
 }
 
+.secondary-controls {
+  margin: 1rem 0;
+}
+
+.secondary-controls > button {
+  margin-right: 0.5rem;
+}
+
+.secondary-controls section {
+  margin: 0.75rem 0 0;
+}
+
+.events {
+  border-color: #17211d;
+}
+
 .status-panel button {
   background: #e68d60;
   border-color: #e68d60;
@@ -145,6 +161,10 @@ summary {
   padding: 1rem 0;
 }
 
+summary strong {
+  font-size: 1.15rem;
+}
+
 summary span {
   color: #596158;
   font-size: 0.9rem;
@@ -173,6 +193,10 @@ summary span {
 }
 
 @media (max-width: 38rem) {
+  .secondary-controls > button {
+    margin-bottom: 0.5rem;
+  }
+
   summary {
     align-items: flex-start;
     flex-direction: column;
