@@ -2,14 +2,14 @@
   "version": "1.0.7",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "opencode"
+    "hermes"
   ],
   "integration_settings": {
-    "opencode": {
+    "hermes": {
       "script": "ps",
-      "invoke_separator": "."
+      "invoke_separator": "-"
     }
   },
-  "integration": "opencode",
-  "default_integration": "opencode"
+  "integration": "hermes",
+  "default_integration": "hermes"
 }
