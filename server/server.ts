@@ -7,6 +7,8 @@ import { createRetrieveIcs, ProxyError, type RetrieveIcs } from './ics-proxy.js'
 
 const MAX_REQUEST_BYTES = 16 * 1024;
 export const MAX_REQUEST_HEADER_BYTES = 16 * 1024;
+const ROBOTS_POLICY = 'noindex, nofollow, noarchive';
+const ROBOTS_TXT = 'User-agent: *\nDisallow: /\n';
 const contentTypes: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
@@ -93,7 +95,13 @@ export function createAppServer(options: AppOptions = {}): Server {
   const retrieve = options.retrieve ?? createRetrieveIcs();
   const staticDir = options.staticDir ?? resolve(process.cwd(), 'dist');
   return createServer({ maxHeaderSize: MAX_REQUEST_HEADER_BYTES }, async (request, response) => {
+    response.setHeader('x-robots-tag', ROBOTS_POLICY);
     const requestUrl = new URL(request.url ?? '/', 'http://localhost');
+    if (requestUrl.pathname === '/robots.txt') {
+      response.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
+      response.end(ROBOTS_TXT);
+      return;
+    }
     if (requestUrl.pathname === '/api/v1/ics') {
       if (request.method !== 'POST' || request.headers['content-type']?.split(';')[0] !== 'application/json') {
         problemResponse(response, new ProxyError(405, 'method-not-allowed', 'Request rejected', 'Use POST with JSON.'));

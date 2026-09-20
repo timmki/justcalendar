@@ -53,4 +53,12 @@ describe('container delivery contract', () => {
     expect(contract).toContain('reverse proxy');
     expect(contract).toContain('0.0.0.0:8787');
   });
+
+  it('packages crawler exclusion policy with the application', async () => {
+    const robots = await read('public/robots.txt');
+    const html = await read('index.html');
+    expect(robots).toContain('User-agent: *');
+    expect(robots).toContain('Disallow: /');
+    expect(html).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
+  });
 });

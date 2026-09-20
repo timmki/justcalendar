@@ -4,7 +4,7 @@ import type { CalendarSnapshot } from '../../src/storage.js';
 
 const defaultFeed = 'https://calendar.example.test/default.ics';
 const replacementFeed = 'https://calendar.example.test/replacement.ics';
-const ics = (title: string) => `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:${title}\nDTSTART:20260102T090000Z\nSUMMARY:${title}\nLOCATION:Room A\nEND:VEVENT\nEND:VCALENDAR`;
+const ics = (title: string) => `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:${title}\nDTSTART:20260102T090000Z\nSUMMARY:${title}\nLOCATION:Room A\nATTACH;FILENAME=Agenda.pdf:https://files.example.test/agenda.pdf\nEND:VEVENT\nEND:VCALENDAR`;
 
 function setup() {
   let local: string | null = null;
@@ -26,6 +26,9 @@ describe('US1 feed journey', () => {
     const { app, getLocal } = setup();
     await app.start();
     expect(app.getState().snapshot?.occurrences[0].title).toBe('Default');
+    expect(app.getState().snapshot?.occurrences[0].attachments).toEqual([
+      { url: 'https://files.example.test/agenda.pdf', name: 'Agenda.pdf' },
+    ]);
     await app.replace(replacementFeed);
     expect(app.getState().snapshot?.occurrences[0].title).toBe('Replacement');
     expect(getLocal()).toBe(replacementFeed);

@@ -11,8 +11,14 @@ export interface CalendarOccurrence {
   title: string;
   location: string | null;
   description: string | null;
+  attachments?: CalendarAttachment[];
   timeZone: string | null;
   sourceUrl: string;
+}
+
+export interface CalendarAttachment {
+  url: string;
+  name: string | null;
 }
 
 export interface NormalizedCalendar {
@@ -48,6 +54,21 @@ function eventOccurrence(
   const summary = typeof event.summary === 'string' && event.summary.trim() ? event.summary.trim() : 'Untitled event';
   const location = typeof event.location === 'string' && event.location.trim() ? event.location.trim() : null;
   const description = typeof event.description === 'string' && event.description.trim() ? event.description.trim() : null;
+  const attachments = event.component.getAllProperties('attach').flatMap((property): CalendarAttachment[] => {
+    if (property.getFirstParameter('value')?.toLowerCase() === 'binary') return [];
+    const value = property.getFirstValue();
+    if (typeof value !== 'string') return [];
+    let url: URL;
+    try {
+      url = new URL(value);
+    } catch {
+      return [];
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return [];
+    const rawName = property.getFirstParameter('filename');
+    const name = typeof rawName === 'string' && rawName.trim() ? rawName.trim() : null;
+    return [{ url: url.toString(), name }];
+  });
   return {
     uid: event.uid,
     recurrenceId: recurrenceId ? formatDate(recurrenceId, recurrenceId.isDate) : null,
@@ -58,6 +79,7 @@ function eventOccurrence(
     title: summary,
     location,
     description,
+    attachments,
     timeZone: start.zone?.tzid ?? null,
     sourceUrl,
   };

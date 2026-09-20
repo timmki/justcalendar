@@ -29,6 +29,12 @@ Run `npm run config:generate` before `npm run build`, then start the Node servic
 
 The application accepts only public HTTPS ICS URLs. The Node proxy performs DNS and response checks, rejects redirects, and does not require upstream CORS headers. Put TLS termination and any optional Basic Authentication at the ingress. The application has no credentials, sessions, or event-management operations.
 
+The application publishes `robots.txt` with `User-agent: *` and `Disallow: /`, sends
+`X-Robots-Tag: noindex, nofollow, noarchive`, and includes the same directive in the HTML
+metadata. These are standards-based, advisory policies for compliant crawlers, scrapers, and AI
+bots; they cannot stop direct clients or spoofed/non-compliant user agents. Use authentication,
+reverse-proxy rules, a WAF, or network controls when hard blocking is required.
+
 Set `JUSTCALENDAR_TELEMETRY_URL` only when an allowed deployment telemetry endpoint is available, and set `JUSTCALENDAR_APP_VERSION` to the deployment revision. Telemetry excludes feed URLs, event UIDs, descriptions, credentials, and conference tokens.
 
 ## Branding

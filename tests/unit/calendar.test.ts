@@ -130,4 +130,25 @@ END:VCALENDAR`, 'https://calendar.example.test/public.ics', new Date(2026, 0, 1,
     expect(result.occurrences.map((event) => event.title)).toEqual(['Today']);
     expect(result.partialData).toBe(true);
   });
+
+  it('normalizes ordered HTTP(S) attachments with optional filenames', () => {
+    const result = normalizeCalendar(`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:attachments
+DTSTART:20260102T090000Z
+SUMMARY:Attachments
+ATTACH;FILENAME=Agenda.pdf:https://files.example.test/agenda.pdf
+ATTACH:https://files.example.test/notes.txt
+ATTACH:mailto:organizer@example.test
+ATTACH;VALUE=BINARY:ignored
+ATTACH:not a url
+END:VEVENT
+END:VCALENDAR`, 'https://calendar.example.test/public.ics', new Date('2026-01-01T00:00:00Z'));
+
+    expect(result.occurrences[0].attachments).toEqual([
+      { url: 'https://files.example.test/agenda.pdf', name: 'Agenda.pdf' },
+      { url: 'https://files.example.test/notes.txt', name: null },
+    ]);
+  });
 });

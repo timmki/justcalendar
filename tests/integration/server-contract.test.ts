@@ -35,6 +35,7 @@ describe('same-origin server contract', () => {
     });
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/calendar');
+    expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow, noarchive');
     expect(await response.text()).toBe('BEGIN:VCALENDAR');
   });
 
@@ -55,6 +56,7 @@ describe('same-origin server contract', () => {
     });
     expect(response.status).toBe(400);
     expect(response.headers.get('content-type')).toContain('application/problem+json');
+    expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow, noarchive');
   });
 
   it.each([
@@ -79,6 +81,7 @@ describe('same-origin server contract', () => {
     });
     expect(response.status).toBe(status);
     expect((await response.json()).type).toContain(type);
+    expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow, noarchive');
   });
 
   it('rejects wrong methods and content types', async () => {
@@ -91,6 +94,10 @@ describe('same-origin server contract', () => {
     const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/ics`, { method: 'GET' });
     expect(response.status).toBe(405);
     expect(response.headers.get('content-type')).toContain('application/problem+json');
+
+    const staticError = await fetch(`http://127.0.0.1:${address.port}/`);
+    expect(staticError.status).toBe(404);
+    expect(staticError.headers.get('x-robots-tag')).toBe('noindex, nofollow, noarchive');
   });
 
   it('serves the root health target and image assets with their media types', async () => {
@@ -109,9 +116,17 @@ describe('same-origin server contract', () => {
     const rootResponse = await fetch(`http://127.0.0.1:${address.port}/`);
     expect(rootResponse.status).toBe(200);
     expect(await rootResponse.text()).toContain('JustCalendar');
+    expect(rootResponse.headers.get('x-robots-tag')).toBe('noindex, nofollow, noarchive');
+
+    const robotsResponse = await fetch(`http://127.0.0.1:${address.port}/robots.txt?source=test`);
+    expect(robotsResponse.status).toBe(200);
+    expect(robotsResponse.headers.get('content-type')).toContain('text/plain');
+    expect(robotsResponse.headers.get('x-robots-tag')).toBe('noindex, nofollow, noarchive');
+    expect(await robotsResponse.text()).toContain('User-agent: *\nDisallow: /');
 
     const pngResponse = await fetch(`http://127.0.0.1:${address.port}/logo.png`);
     expect(pngResponse.headers.get('content-type')).toContain('image/png');
+    expect(pngResponse.headers.get('x-robots-tag')).toBe('noindex, nofollow, noarchive');
     expect((await pngResponse.arrayBuffer()).byteLength).toBe(4);
 
     const jpgResponse = await fetch(`http://127.0.0.1:${address.port}/logo.jpg`);

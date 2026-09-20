@@ -12,6 +12,8 @@ const copy = {
   recurring: 'Wiederkehrend',
   ends: 'Endet',
   location: 'Ort',
+  attachments: 'Anhänge',
+  attachment: 'Anhang',
   openDetails: 'Details anzeigen',
   closeDetails: 'Details ausblenden',
   maps: 'In Google Maps öffnen',
@@ -130,6 +132,20 @@ function createEventCard(occurrence: ReturnType<typeof visibleOccurrences>[numbe
     content.append(locationRow);
   }
   if (occurrence.description) content.append(element('p', occurrence.description));
+  if (occurrence.attachments?.length) {
+    content.append(element('h3', copy.attachments));
+    const attachments = element('ul');
+    for (const [index, attachment] of occurrence.attachments.entries()) {
+      const link = element('a', attachment.name ?? `${copy.attachment} ${index + 1}`);
+      link.href = attachment.url;
+      link.target = '_blank';
+      link.rel = 'noreferrer noopener';
+      const item = element('li');
+      item.append(link);
+      attachments.append(item);
+    }
+    content.append(attachments);
+  }
   details.append(content);
   details.addEventListener('toggle', () => {
     item.classList.toggle('is-open', details.open);

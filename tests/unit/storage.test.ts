@@ -29,6 +29,18 @@ describe('snapshot validation', () => {
     expect(isValidSnapshot(snapshot, url)).toBe(true);
   });
 
+  it('accepts legacy snapshots without attachment data and validates attachment values', () => {
+    expect(isValidSnapshot(snapshot, url)).toBe(true);
+    expect(isValidSnapshot({
+      ...snapshot,
+      occurrences: [{ ...occurrence, attachments: [{ url: 'https://files.example.test/agenda.pdf', name: 'Agenda.pdf' }] }],
+    }, url)).toBe(true);
+    expect(isValidSnapshot({
+      ...snapshot,
+      occurrences: [{ ...occurrence, attachments: [{ url: 'javascript:alert(1)', name: null }] }],
+    }, url)).toBe(false);
+  });
+
   it('rejects unsafe or oversized stored data', () => {
     expect(isValidSnapshot({ ...snapshot, sourceUrl: 'https://example.test:8443/feed.ics' }, url)).toBe(false);
     expect(isValidSnapshot({ ...snapshot, occurrences: Array.from({ length: 5001 }, () => occurrence) }, url)).toBe(false);

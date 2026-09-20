@@ -20,6 +20,20 @@ test.describe('US1 feed view', () => {
     await expect(mapLink).toHaveAttribute('rel', 'noreferrer noopener');
   });
 
+  test('shows safe named and fallback attachment links', async ({ page }) => {
+    const feed = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:attachments\nDTSTART:${icsDay(utcDateAtOffset(2))}T090000Z\nSUMMARY:Attachment event\nATTACH;FILENAME=Agenda.pdf:https://files.example.test/agenda.pdf\nATTACH:https://files.example.test/notes.txt\nATTACH:mailto:organizer@example.test\nEND:VEVENT\nEND:VCALENDAR`;
+    await configurePage(page, { feed });
+    await page.goto('/');
+    await page.getByText('Attachment event').click();
+    const agenda = page.getByRole('link', { name: 'Agenda.pdf' });
+    const fallback = page.getByRole('link', { name: 'Anhang 2' });
+    await expect(agenda).toHaveAttribute('href', 'https://files.example.test/agenda.pdf');
+    await expect(fallback).toHaveAttribute('href', 'https://files.example.test/notes.txt');
+    await expect(agenda).toHaveAttribute('target', '_blank');
+    await expect(agenda).toHaveAttribute('rel', 'noreferrer noopener');
+    await expect(page.getByText('mailto:organizer@example.test')).toHaveCount(0);
+  });
+
   test('mutes completed events while keeping them expandable', async ({ page }) => {
     const pastStart = localDateAtOffset(-3);
     const pastEnd = localDateAtOffset(-2);

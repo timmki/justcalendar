@@ -35,6 +35,18 @@ function validOccurrenceDate(value: unknown, allDay: boolean): boolean {
 function validOccurrence(value: unknown, sourceUrl: string): boolean {
   if (!value || typeof value !== 'object') return false;
   const occurrence = value as Record<string, unknown>;
+  const attachments = occurrence.attachments;
+  const validAttachments = attachments === undefined || (Array.isArray(attachments) && attachments.every((attachment) => {
+    if (!attachment || typeof attachment !== 'object') return false;
+    const item = attachment as Record<string, unknown>;
+    if (typeof item.url !== 'string' || (item.name !== null && typeof item.name !== 'string')) return false;
+    try {
+      const attachmentUrl = new URL(item.url);
+      return attachmentUrl.protocol === 'http:' || attachmentUrl.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }));
   return typeof occurrence.uid === 'string'
     && occurrence.uid.length > 0
     && (occurrence.recurrenceId === null || validDate(occurrence.recurrenceId))
@@ -46,6 +58,7 @@ function validOccurrence(value: unknown, sourceUrl: string): boolean {
     && occurrence.title.length > 0
     && (occurrence.location === null || typeof occurrence.location === 'string')
     && (occurrence.description === null || typeof occurrence.description === 'string')
+    && validAttachments
     && (occurrence.timeZone === null || typeof occurrence.timeZone === 'string')
     && occurrence.sourceUrl === sourceUrl;
 }
