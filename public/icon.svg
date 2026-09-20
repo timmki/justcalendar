@@ -1,3 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <text x="256" y="390" text-anchor="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="360">📅</text>
+  <rect width="512" height="512" rx="112" fill="#11231f"/>
+  <rect x="96" y="112" width="320" height="304" rx="32" fill="#f3f0e8"/>
+  <rect x="96" y="112" width="320" height="88" rx="32" fill="#d86f45"/>
+  <rect x="96" y="168" width="320" height="32" fill="#d86f45"/>
+  <path d="M176 80v80M336 80v80" stroke="#f3f0e8" stroke-linecap="round" stroke-width="32"/>
+  <path d="M160 264h192M160 336h112" stroke="#11231f" stroke-linecap="round" stroke-width="28"/>
 </svg>

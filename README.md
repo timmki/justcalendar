@@ -33,10 +33,11 @@ Set `JUSTCALENDAR_TELEMETRY_URL` only when an allowed deployment telemetry endpo
 
 ## Branding
 
-The header uses the configured `JUSTCALENDAR_TITLE` and `JUSTCALENDAR_SUBTITLE` values. To add a
-deployment logo without changing application code, place `logo.png` in `public/`; if it is not
-available, the application tries `public/logo.jpg`. When neither asset exists, the calendar emoji is
-shown as the default logo. The same emoji is used by the browser favicon and PWA icon.
+The header uses the configured `JUSTCALENDAR_TITLE` and `JUSTCALENDAR_SUBTITLE` values. The
+container uses `JUSTCALENDAR_SUBTITLE` as the installed PWA name. To add a deployment logo without
+changing application code, place `logo.png` in `public/`; if it is not available, the application
+tries `public/logo.jpg`. When neither asset exists, the calendar emoji is shown as the default logo.
+The same emoji is used by the browser favicon and PWA icon.
 
 ## Docker and Raspberry Pi
 

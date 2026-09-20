@@ -8,6 +8,7 @@ test('controls have German names, visible focus, and status announcements', asyn
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/icon.svg');
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('crossorigin', 'use-credentials');
   await expect(page.locator('header p')).toHaveText('Mein Kalender');
   await expect(page.getByRole('heading', { name: 'Kommende Termine' })).toBeVisible();
   const settings = page.getByRole('button', { name: 'Einstellungen', exact: true });

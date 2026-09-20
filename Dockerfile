@@ -19,6 +19,7 @@ COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/dist-server ./dist-server
 COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/scripts/generate-config.mjs ./scripts/generate-config.mjs
+COPY --from=build --chown=node:node /app/scripts/configure-runtime.mjs ./scripts/configure-runtime.mjs
 COPY --from=build --chown=node:node /app/scripts/container-entrypoint.mjs ./scripts/container-entrypoint.mjs
 
 USER node
