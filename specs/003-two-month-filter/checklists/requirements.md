@@ -1,7 +1,7 @@
-# Specification Quality Checklist: German, Brandable Event-First Calendar UI
+# Specification Quality Checklist: Two-Month Calendar Filter
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-09-19
+**Created**: 2026-09-20
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -16,7 +16,7 @@
 - [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
-- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] Success criteria are technology-agnostic
 - [x] All acceptance scenarios are defined
 - [x] Edge cases are identified
 - [x] Scope is clearly bounded
@@ -31,4 +31,5 @@
 
 ## Notes
 
-- The feature preserves existing calendar behavior and scopes changes to content hierarchy and secondary-control visibility.
+- The specification defines an inclusive local-calendar-date interpretation of “next two months”, clamped month-end behavior, explicit historical ranges, URL persistence, and clean-load recalculation.
+- Existing feed, snapshot, search, recovery, German UI, responsive layout, and performance behavior are explicitly preserved.

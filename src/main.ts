@@ -1,5 +1,5 @@
 import './styles.css';
-import { createCalendarApp, filtersFromSearch } from './app.js';
+import { clearFilterParams, createCalendarApp } from './app.js';
 import { FeedError, requestCalendar, requestRuntimeConfig } from './feed.js';
 import { mountCalendarApp } from './ui.js';
 import { loadLocalOverride, loadSnapshot, saveLocalOverride, saveSnapshot } from './storage.js';
@@ -35,6 +35,10 @@ function telemetryReason(error: unknown): string {
 async function main(): Promise<void> {
   const root = document.querySelector<HTMLElement>('#app');
   if (!root) return;
+  const cleanSearch = clearFilterParams(window.location.search);
+  if (cleanSearch !== window.location.search) {
+    window.history.replaceState(null, '', `${window.location.pathname}${cleanSearch}${window.location.hash}`);
+  }
   const config = await loadConfig();
   const telemetry = createTelemetry(config?.telemetryEndpoint ?? null, fetch, { appVersion: config?.appVersion ?? 'development' });
   if (!config) telemetry.report('configuration_error', { reason: 'configuration_unavailable' });
@@ -56,7 +60,6 @@ async function main(): Promise<void> {
     saveSnapshot,
   });
   mountCalendarApp(root, app);
-  app.setFilters(filtersFromSearch(window.location.search));
   await app.start();
   if (app.getState().snapshot) telemetry.report('snapshot_loaded', { stale: app.getState().stale });
   if ('serviceWorker' in navigator) {

@@ -1,4 +1,5 @@
 import { normalizeCalendar, filterOccurrences, type FilterSelection, type NormalizedCalendar } from './calendar.js';
+import { defaultDateRange } from './date-range.js';
 import { buildProxyRequest, type RuntimeConfig } from './feed.js';
 import type { CalendarSnapshot } from './storage.js';
 
@@ -8,6 +9,8 @@ export interface AppState {
   status: AppStatus;
   activeUrl: string | null;
   localOverride: string | null;
+  title: string | null;
+  subtitle: string | null;
   snapshot: CalendarSnapshot | null;
   filters: FilterSelection;
   error: string | null;
@@ -37,10 +40,12 @@ export interface CalendarApp {
 }
 
 const emptyFilters = (): FilterSelection => ({ from: null, to: null, query: '' });
+const defaultFilters = (now: Date): FilterSelection => ({ ...defaultDateRange(now), query: '' });
 
-export function filtersFromSearch(search: string): FilterSelection {
+export function filtersFromSearch(search: string, now = new Date()): FilterSelection {
   const params = new URLSearchParams(search);
-  return normalizeFilters({ from: params.get('from'), to: params.get('to'), query: params.get('query') ?? '' });
+  const filters = normalizeFilters({ from: params.get('from'), to: params.get('to'), query: params.get('query') ?? '' });
+  return !params.has('from') && !params.has('to') ? { ...defaultFilters(now), query: filters.query } : filters;
 }
 
 export function searchFromFilters(filters: FilterSelection): string {
@@ -49,6 +54,15 @@ export function searchFromFilters(filters: FilterSelection): string {
   if (normalized.from) params.set('from', normalized.from);
   if (normalized.to) params.set('to', normalized.to);
   if (normalized.query.trim()) params.set('query', normalized.query.trim());
+  const value = params.toString();
+  return value ? `?${value}` : '';
+}
+
+export function clearFilterParams(search: string): string {
+  const params = new URLSearchParams(search);
+  params.delete('from');
+  params.delete('to');
+  params.delete('query');
   const value = params.toString();
   return value ? `?${value}` : '';
 }
@@ -69,12 +83,15 @@ export function normalizeFilters(filters: FilterSelection): FilterSelection {
 export function createCalendarApp(dependencies: AppDependencies): CalendarApp {
   const listeners = new Set<(state: AppState) => void>();
   let config = dependencies.config;
+  const currentDate = () => dependencies.now?.() ?? new Date();
+  const branding = () => ({ title: config?.title ?? null, subtitle: config?.subtitle ?? null });
   let state: AppState = {
     status: 'loading',
     activeUrl: null,
     localOverride: null,
+    ...branding(),
     snapshot: null,
-    filters: emptyFilters(),
+    filters: defaultFilters(currentDate()),
     error: null,
     stale: false,
   };
@@ -91,7 +108,7 @@ export function createCalendarApp(dependencies: AppDependencies): CalendarApp {
     if (!url && dependencies.loadConfig) {
       config = await dependencies.loadConfig().catch(() => null);
       url = selectedUrl();
-      update({ activeUrl: url });
+      update({ activeUrl: url, ...branding() });
     }
     if (!url) {
       update({ status: 'configuration', activeUrl: null, error: 'No deployment calendar URL is configured.', stale: false });
@@ -99,7 +116,7 @@ export function createCalendarApp(dependencies: AppDependencies): CalendarApp {
     }
     update({ status: 'loading', activeUrl: url, error: null });
     try {
-      const currentTime = dependencies.now?.() ?? new Date();
+      const currentTime = currentDate();
       const normalized: NormalizedCalendar = normalizeCalendar(
         await dependencies.request(url),
         url,
@@ -136,7 +153,7 @@ export function createCalendarApp(dependencies: AppDependencies): CalendarApp {
     },
     start: async () => {
       const localOverride = await dependencies.loadLocalOverride().catch(() => null);
-      update({ localOverride, activeUrl: localOverride ?? config?.defaultFeedUrl ?? null });
+      update({ localOverride, activeUrl: localOverride ?? config?.defaultFeedUrl ?? null, ...branding() });
       await refresh();
     },
     refresh,
@@ -144,7 +161,7 @@ export function createCalendarApp(dependencies: AppDependencies): CalendarApp {
       try {
         const normalizedUrl = buildProxyRequest(url).url;
         update({ status: 'loading', error: null });
-        const currentTime = dependencies.now?.() ?? new Date();
+        const currentTime = currentDate();
         const normalized = normalizeCalendar(
           await dependencies.request(normalizedUrl),
           normalizedUrl,
@@ -177,7 +194,7 @@ export function createCalendarApp(dependencies: AppDependencies): CalendarApp {
       await refresh();
     },
     setFilters: (filters) => update({ filters: normalizeFilters(filters) }),
-    clearFilters: () => update({ filters: emptyFilters() }),
+    clearFilters: () => update({ filters: defaultFilters(currentDate()) }),
   };
 }
 

@@ -13,6 +13,20 @@ const occurrences: CalendarOccurrence[] = [
 ];
 
 describe('calendar filters', () => {
+  it('derives a clamped two-calendar-month default range', async () => {
+    const { addCalendarMonthsClamped, defaultDateRange } = await import('../../src/date-range.js');
+    const monthEnd = new Date(2026, 6, 31, 12);
+    expect(addCalendarMonthsClamped(monthEnd, 2)).toEqual(new Date(2026, 8, 30, 12));
+    expect(defaultDateRange(monthEnd)).toEqual({ from: '2026-07-31', to: '2026-09-30' });
+  });
+
+  it('applies the default date range only when the URL has no explicit dates', async () => {
+    const { filtersFromSearch } = await import('../../src/app.js');
+    const now = new Date(2026, 6, 31, 12);
+    expect(filtersFromSearch('', now)).toEqual({ from: '2026-07-31', to: '2026-09-30', query: '' });
+    expect(filtersFromSearch('?from=2026-01-01&query=history', now)).toEqual({ from: '2026-01-01', to: null, query: 'history' });
+  });
+
   it('uses inclusive date bounds and case-insensitive text matching', () => {
     expect(filterOccurrences(occurrences, { from: '2026-01-02', to: '2026-01-02', query: '' })).toHaveLength(1);
     expect(filterOccurrences(occurrences, { from: null, to: null, query: 'TEAM MEETING' })[0].uid).toBe('one');
@@ -33,5 +47,15 @@ describe('calendar filters', () => {
     const { filtersFromSearch } = await import('../../src/app.js');
     expect(filtersFromSearch('?from=2026-02-30')).toEqual({ from: null, to: null, query: '' });
     expect(filtersFromSearch('?from=2026-02-03&to=2026-02-01')).toEqual({ from: null, to: null, query: '' });
+  });
+
+  it('accepts historical and mixed explicit ranges without a today minimum', async () => {
+    const { filtersFromSearch } = await import('../../src/app.js');
+    expect(filtersFromSearch('?from=2025-01-01&to=2025-01-31')).toEqual({ from: '2025-01-01', to: '2025-01-31', query: '' });
+    expect(filtersFromSearch('?from=2025-01-01&to=2026-12-31&query=planning')).toEqual({
+      from: '2025-01-01',
+      to: '2026-12-31',
+      query: 'planning',
+    });
   });
 });

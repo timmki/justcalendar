@@ -2,5 +2,7 @@
   "schemaVersion": 1,
   "defaultFeedUrl": null,
   "telemetryEndpoint": null,
-  "appVersion": null
+  "appVersion": null,
+  "title": null,
+  "subtitle": null
 }

@@ -3,6 +3,8 @@ export interface RuntimeConfig {
   defaultFeedUrl: string | null;
   telemetryEndpoint: string | null;
   appVersion?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
 }
 
 export interface ProxyRequest {
@@ -16,6 +18,7 @@ export type ProxyResponse =
 
 export const CLIENT_REQUEST_TIMEOUT_MS = 10_000;
 export const MAX_FEED_URL_LENGTH = 2048;
+export const MAX_BRANDING_LENGTH = 120;
 
 export class FeedError extends Error {
   constructor(message: string, readonly reason: string) {
@@ -35,6 +38,13 @@ function validateHttpsUrl(value: unknown, nullable: boolean, proxyPolicy = false
   return url.href;
 }
 
+function validateBranding(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') throw new Error('Branding values must be strings or null.');
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, MAX_BRANDING_LENGTH) : null;
+}
+
 export function parseRuntimeConfig(input: unknown): RuntimeConfig {
   if (!input || typeof input !== 'object') throw new Error('Invalid runtime configuration.');
   const value = input as Record<string, unknown>;
@@ -44,6 +54,8 @@ export function parseRuntimeConfig(input: unknown): RuntimeConfig {
     defaultFeedUrl: validateHttpsUrl(value.defaultFeedUrl ?? null, true, true),
     telemetryEndpoint: validateHttpsUrl(value.telemetryEndpoint ?? null, true),
     appVersion: typeof value.appVersion === 'string' && value.appVersion.trim() ? value.appVersion.trim() : null,
+    title: validateBranding(value.title),
+    subtitle: validateBranding(value.subtitle),
   };
 }
 

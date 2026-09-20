@@ -59,6 +59,34 @@ END:VCALENDAR`;
     expect(event.end).toBe('2026-01-02T11:00:00.000Z');
   });
 
+  it('retains bounded recent history and the full two-month future boundary', () => {
+    const horizon = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:history-outside
+DTSTART:20250130T090000Z
+SUMMARY:Outside history
+END:VEVENT
+BEGIN:VEVENT
+UID:history
+DTSTART:20250131T090000Z
+SUMMARY:History
+END:VEVENT
+BEGIN:VEVENT
+UID:future-boundary
+DTSTART:20260331T090000Z
+SUMMARY:Future boundary
+END:VEVENT
+BEGIN:VEVENT
+UID:future-outside
+DTSTART:20260401T090000Z
+SUMMARY:Outside future
+END:VEVENT
+END:VCALENDAR`;
+    const result = normalizeCalendar(horizon, 'https://calendar.example.test/public.ics', new Date(2026, 0, 31, 12));
+    expect(result.occurrences.map((event) => event.title)).toEqual(['History', 'Future boundary']);
+  });
+
   it('rejects non-v2 calendar envelopes', () => {
     expect(() => normalizeCalendar('BEGIN:VCALENDAR\nVERSION:1.0\nEND:VCALENDAR', 'https://calendar.example.test/public.ics')).toThrow();
   });

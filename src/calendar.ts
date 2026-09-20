@@ -1,4 +1,5 @@
 import ICAL from 'ical.js';
+import { normalizationWindow } from './date-range.js';
 
 export interface CalendarOccurrence {
   uid: string;
@@ -25,7 +26,6 @@ export interface FilterSelection {
   query: string;
 }
 
-const DISPLAY_DAYS = 30;
 export const MAX_OCCURRENCES = 5000;
 
 function formatDate(value: ICAL.Time, allDay: boolean): string {
@@ -80,11 +80,11 @@ export function normalizeCalendar(ics: string, sourceUrl: string, now = new Date
     throw new Error('Only iCalendar VERSION:2.0 feeds are supported.');
   }
   const events = component.getAllSubcomponents('vevent');
-  const windowStart = ICAL.Time.fromJSDate(now, false);
-  const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const allDayStart = ICAL.Time.fromJSDate(currentDate, false);
-  const windowEnd = ICAL.Time.fromJSDate(new Date(now.getTime() + DISPLAY_DAYS * 86_400_000), false);
-  const allDayEnd = ICAL.Time.fromJSDate(new Date(currentDate.getTime() + DISPLAY_DAYS * 86_400_000), false);
+  const window = normalizationWindow(now);
+  const windowStart = ICAL.Time.fromJSDate(window.timedStart, false);
+  const allDayStart = ICAL.Time.fromJSDate(window.allDayStart, false);
+  const windowEnd = ICAL.Time.fromJSDate(window.timedEnd, false);
+  const allDayEnd = ICAL.Time.fromJSDate(window.allDayEnd, false);
   const occurrences: CalendarOccurrence[] = [];
   let partialData = false;
   const inWindow = (value: ICAL.Time) => {

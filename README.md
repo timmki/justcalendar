@@ -31,6 +31,13 @@ The application accepts only public HTTPS ICS URLs. The Node proxy performs DNS 
 
 Set `JUSTCALENDAR_TELEMETRY_URL` only when an allowed deployment telemetry endpoint is available, and set `JUSTCALENDAR_APP_VERSION` to the deployment revision. Telemetry excludes feed URLs, event UIDs, descriptions, credentials, and conference tokens.
 
+## Branding
+
+The header uses the configured `JUSTCALENDAR_TITLE` and `JUSTCALENDAR_SUBTITLE` values. To add a
+deployment logo without changing application code, place `logo.png` in `public/`; if it is not
+available, the application tries `public/logo.jpg`. When neither asset exists, the text branding
+is shown without a broken-image placeholder.
+
 Release validation requires `RELEASE_ORIGIN`, `RELEASE_ICS_URL`, and `RELEASE_ROLLBACK_ORIGIN`; it checks the deployed config, proxy response, telemetry configuration, and rollback target. `npm run ci` runs the local CI-equivalent checks.
 
 ## Recovery

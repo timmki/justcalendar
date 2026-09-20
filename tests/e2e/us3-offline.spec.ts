@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { addCalendarMonthsClamped, formatLocalDate } from '../../src/date-range.js';
 import { configurePage } from './fixtures.js';
 
 async function primeOfflineShell(page: Parameters<typeof configurePage>[0]): Promise<void> {
@@ -15,9 +16,9 @@ test.describe('US3 offline snapshot', () => {
     await configurePage(page);
     await page.goto('/');
     await expect(page.getByText('Default event')).toBeVisible();
-    await page.getByRole('button', { name: 'Settings' }).click();
-    await page.getByLabel('Public ICS URL').fill('https://calendar.example.test/default.ics');
-    await page.getByRole('button', { name: 'Use this calendar' }).click();
+    await page.getByRole('button', { name: 'Einstellungen' }).click();
+    await page.getByLabel('Öffentliche ICS-URL').fill('https://calendar.example.test/default.ics');
+    await page.getByRole('button', { name: 'Diesen Kalender verwenden' }).click();
     await expect(page.getByText('Default event')).toBeVisible();
     await primeOfflineShell(page);
     expect(await page.evaluate(() => new Promise<boolean>((resolve) => {
@@ -34,11 +35,13 @@ test.describe('US3 offline snapshot', () => {
     await context.setOffline(true);
     const started = Date.now();
     await page.reload();
-    await expect(page.getByText(/Showing the last saved snapshot/)).toBeVisible();
+    await expect(page.getByText(/Der letzte gespeicherte Stand wird angezeigt/)).toBeVisible();
     expect(Date.now() - started).toBeLessThan(5000);
-    await page.getByRole('button', { name: 'Filters' }).click();
-    await page.getByLabel('Search').fill('Default');
-    await page.getByRole('button', { name: 'Apply filters' }).click();
+    await page.getByRole('button', { name: 'Filter (aktiv)', exact: true }).click();
+    await expect(page.getByLabel('Von')).toHaveValue(formatLocalDate(new Date()));
+    await expect(page.getByLabel('Bis')).toHaveValue(formatLocalDate(addCalendarMonthsClamped(new Date(), 2)));
+    await page.getByLabel('Suche').fill('Default');
+    await page.getByRole('button', { name: 'Filter anwenden' }).click();
     await expect(page.getByText('Default event')).toBeVisible();
   });
 
@@ -58,8 +61,8 @@ test.describe('US3 offline snapshot', () => {
     await page.unroute('**/api/v1/ics');
     await context.setOffline(true);
     await page.reload();
-    await expect(page.getByText('No offline calendar is available yet.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Refresh calendar' })).toBeVisible();
+    await expect(page.getByText('Noch kein Offline-Kalender verfügbar.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Kalender aktualisieren' })).toBeVisible();
     expect(await page.locator('.events').evaluate((events) => Boolean(
       events.compareDocumentPosition(document.querySelector('.status-panel')!) & Node.DOCUMENT_POSITION_FOLLOWING,
     ))).toBe(true);

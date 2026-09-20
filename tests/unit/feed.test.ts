@@ -14,6 +14,21 @@ describe('feed boundary', () => {
     expect(() => parseRuntimeConfig({ schemaVersion: 1, defaultFeedUrl: 'https://example.test:8443/feed.ics' })).toThrow();
   });
 
+  it('normalizes optional public branding fields at the config boundary', () => {
+    const config = parseRuntimeConfig({
+      schemaVersion: 1,
+      defaultFeedUrl: null,
+      telemetryEndpoint: null,
+      title: '  <Mein Kalender>  ',
+      subtitle: '  Heute und demnächst  ',
+    });
+    expect(config.title).toBe('<Mein Kalender>');
+    expect(config.subtitle).toBe('Heute und demnächst');
+    expect(parseRuntimeConfig({ schemaVersion: 1, defaultFeedUrl: null, telemetryEndpoint: null, title: '  ', subtitle: null })).toMatchObject({ title: null, subtitle: null });
+    expect(parseRuntimeConfig({ schemaVersion: 1, defaultFeedUrl: null, telemetryEndpoint: null, title: 'x'.repeat(200) }).title).toHaveLength(120);
+    expect(() => parseRuntimeConfig({ schemaVersion: 1, defaultFeedUrl: null, telemetryEndpoint: null, title: 42 })).toThrow();
+  });
+
   it('builds the versioned same-origin proxy request', () => {
     expect(buildProxyRequest('https://calendar.example.test/public.ics')).toEqual({
       schemaVersion: 1,

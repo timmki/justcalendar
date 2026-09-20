@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCalendarApp, filtersFromSearch, searchFromFilters } from '../../src/app.js';
+import { clearFilterParams, createCalendarApp, filtersFromSearch, searchFromFilters } from '../../src/app.js';
 import type { CalendarSnapshot } from '../../src/storage.js';
 
 const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:one\nDTSTART:20260102T090000Z\nSUMMARY:One\nEND:VEVENT\nEND:VCALENDAR`;
@@ -27,6 +27,31 @@ describe('calendar app state', () => {
     await app.replace('https://example.test/replacement.ics');
     expect(app.getState().activeUrl).toBe('https://example.test/replacement.ics');
     expect(app.getState().localOverride).toBe('https://example.test/replacement.ics');
+  });
+
+  it('exposes configured branding without changing feed state', async () => {
+    const app = createCalendarApp(dependencies({
+      config: {
+        schemaVersion: 1,
+        defaultFeedUrl: 'https://example.test/default.ics',
+        telemetryEndpoint: null,
+        title: 'Mein Kalender',
+        subtitle: 'Heute und demnächst',
+      },
+    }));
+    await app.start();
+    expect(app.getState().title).toBe('Mein Kalender');
+    expect(app.getState().subtitle).toBe('Heute und demnächst');
+    expect(app.getState().activeUrl).toBe('https://example.test/default.ics');
+  });
+
+  it('derives and restores the two-month default date range', async () => {
+    const app = createCalendarApp(dependencies({ now: () => new Date(2026, 6, 31, 12) }));
+    expect(app.getState().filters).toEqual({ from: '2026-07-31', to: '2026-09-30', query: '' });
+    app.setFilters({ from: '2025-01-01', to: '2025-01-31', query: 'history' });
+    expect(app.getState().filters).toEqual({ from: '2025-01-01', to: '2025-01-31', query: 'history' });
+    app.clearFilters();
+    expect(app.getState().filters).toEqual({ from: '2026-07-31', to: '2026-09-30', query: '' });
   });
 
   it('preserves the active feed after a replacement fails', async () => {
@@ -63,6 +88,10 @@ describe('calendar app state', () => {
 });
 
 describe('filter URL state', () => {
+  it('removes only filter parameters when the page is reloaded', () => {
+    expect(clearFilterParams('?from=2026-01-01&to=2026-01-31&query=history&feed=custom')).toBe('?feed=custom');
+  });
+
   it('round-trips supported filters and drops malformed dates', () => {
     const filters = filtersFromSearch('?from=2026-01-01&to=bad&query=team%20meeting');
     expect(filters).toEqual({ from: '2026-01-01', to: null, query: 'team meeting' });
