@@ -93,18 +93,18 @@ jobs:
 
   deploy:
     needs: validate-and-publish
-    if: vars.DOKPLOY_URL != '' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.repository == 'timmki/justcalendar' && github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - name: Redeploy in Dokploy
         env:
-          DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
           DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
         run: |
-          if [ -z "$DOKPLOY_API_KEY" ] || [ -z "$DOKPLOY_COMPOSE_ID" ]; then
-            echo "::error::DOKPLOY_URL is set, but the secrets DOKPLOY_API_KEY or DOKPLOY_COMPOSE_ID are missing"
+          if [ -z "$DOKPLOY_URL" ] || [ -z "$DOKPLOY_API_KEY" ] || [ -z "$DOKPLOY_COMPOSE_ID" ]; then
+            echo "::error::The secrets DOKPLOY_URL, DOKPLOY_API_KEY and DOKPLOY_COMPOSE_ID are required"
             exit 1
           fi
           curl --fail-with-body --silent --show-error --max-time 60 \

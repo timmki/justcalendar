@@ -66,9 +66,8 @@ builds are published to `ghcr.io/<owner>/<repository>` with branch/tag/SHA metad
 build without publishing.
 
 After a successful image push from `master`, the optional `deploy` job triggers a redeploy in
-[Dokploy](https://dokploy.com/). It only runs when the repository variable `DOKPLOY_URL` is set
-and also needs the secrets `DOKPLOY_API_KEY` and `DOKPLOY_COMPOSE_ID`. Forks and pull requests
-skip it. The matching Compose stack lives in
+[Dokploy](https://dokploy.com/). It only runs in `timmki/justcalendar` itself and needs the secrets
+`DOKPLOY_URL`, `DOKPLOY_API_KEY` and `DOKPLOY_COMPOSE_ID`. Forks and pull requests skip it. The matching Compose stack lives in
 [timmki/justcalendar-compose](https://github.com/timmki/justcalendar-compose).
 
 On a Raspberry Pi, pull and run the architecture-appropriate manifest:
